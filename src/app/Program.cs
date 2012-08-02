@@ -33,7 +33,7 @@ namespace configtransformer
                     return;
                 }
 
-                rootDirectory = new DirectoryInfo(arguments[1]);    
+                rootDirectory = new DirectoryInfo(arguments[0]);    
             }
             
             var config = arguments[1];
