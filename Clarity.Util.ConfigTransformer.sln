@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "src\app\app.csproj", "{441A2773-C899-4AF9-8CC9-4FCF363E2444}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transformer", "src\app\Transformer.csproj", "{441A2773-C899-4AF9-8CC9-4FCF363E2444}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

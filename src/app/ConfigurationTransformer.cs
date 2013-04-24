@@ -1,18 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Xml;
-using Microsoft.Web.Publishing.Tasks;
+using Microsoft.Web.XmlTransform;
+using log4net;
 
-namespace configtransformer
+namespace Clarity.Util.ConfigTransformer
 {
     /// Transforms file with .config extensions using an override file specified by environment
     /// <example>web.config -> web.prod.config</example>    
-    /// </summary>
     public class ConfigurationTransformer
     {
+        protected readonly ILog Logger = LogManager.GetLogger(typeof(ConfigurationTransformer));
+
         readonly DirectoryInfo _rootDirectory;
         readonly string _environmentName;
 
@@ -30,12 +29,18 @@ namespace configtransformer
         /// <summary>
         /// Look for each {CFG}.config file and transform it with a {CFG}.{ENV}.config
         /// </summary>
-        public void Transform()
+        public bool Transform()
         {
             Console.WriteLine("Transforming application located at: {0} for environment: {1}", _rootDirectory, _environmentName);
 
             foreach (var configSettingsFile in _rootDirectory.EnumerateFiles("*.config", SearchOption.AllDirectories))
             {
+                if (configSettingsFile.Directory == null)
+                {
+                    Logger.ErrorFormat("Not a directory at: '{0}'", configSettingsFile.FullName);
+                    return false;
+                }
+
                 var environmentOverrideFileName = string.Format("{0}.{1}.config", Path.GetFileNameWithoutExtension(configSettingsFile.FullName), _environmentName);
                 var environmentOverrideFile = Path.Combine(configSettingsFile.Directory.FullName, environmentOverrideFileName);
                 if (File.Exists(environmentOverrideFile) == false)
@@ -45,7 +50,38 @@ namespace configtransformer
 
                 Console.WriteLine("Transforming cfg file: {0} with override file: {1}", configSettingsFile.FullName, environmentOverrideFile);
 
-                TransformFile(configSettingsFile.FullName, configSettingsFile.FullName, environmentOverrideFile);
+                if (Transform(configSettingsFile.FullName, configSettingsFile.FullName, environmentOverrideFile) == false)
+                {
+                    return false;                    
+                }
+            }
+
+            return true;
+        }
+
+        public bool Transform(string sourceFile, string destinationFile, string transformFile)
+        {
+            using (var document = new XmlTransformableDocument())
+            {
+                document.PreserveWhitespace = true;
+                document.Load(sourceFile);
+
+                using (var transform = new XmlTransformation(transformFile))
+                {
+                    var success = transform.Apply(document);
+                    document.Save(destinationFile);
+
+                    if (success == false)
+                    {
+                        Logger.ErrorFormat("\nCould not save transformation at '{0}'\n\n", new FileInfo(destinationFile).FullName);
+                    }
+                    else
+                    {
+                        Logger.DebugFormat("\nSaved transformation at '{0}'\n\n", new FileInfo(destinationFile).FullName);
+                    }
+
+                    return success;
+                }
             }
         }
 

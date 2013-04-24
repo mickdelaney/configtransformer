@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using log4net;
 
-namespace configtransformer
+namespace Clarity.Util.ConfigTransformer
 {
     class Program
     {
+        protected static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
+
         static void Main(string[] args)
         {
             var arguments = new List<string>(args);
             if(arguments.Count == 0)
             {
-                Console.WriteLine("You must supply atleast the configuration you want. ");
-                Console.WriteLine("Usage: configtransformer.exe config [Uses current directory]");
-                Console.WriteLine("Usage: configtransformer.exe directory config ");
-                return;
+                Logger.Error("You must supply atleast the configuration you want. ");
+                Logger.Error("Usage: configtransformer.exe config [Uses current directory]");
+                Logger.Error("Usage: configtransformer.exe directory config ");
+                Environment.Exit(1);
             }
 
             DirectoryInfo rootDirectory;
@@ -29,8 +30,8 @@ namespace configtransformer
             {
                 if (Directory.Exists(arguments[0]) == false)
                 {
-                    Console.WriteLine("Cannot find directory {0}.", arguments[0]);
-                    return;
+                    Logger.ErrorFormat("Cannot find directory {0}.", arguments[0]);
+                    Environment.Exit(1);
                 }
 
                 rootDirectory = new DirectoryInfo(arguments[0]);    
@@ -38,11 +39,17 @@ namespace configtransformer
             
             var config = arguments[1];
 
+            Logger.DebugFormat("Starting transform in root directory {0} with configuration {1}", rootDirectory.FullName, config);
+
             var transformer = new ConfigurationTransformer(rootDirectory, config);
-            Console.WriteLine("Starting transform in root directory {0} with configuration {1}", rootDirectory.FullName, config);
-            transformer.Transform();
-            
-            Console.WriteLine("Completed transform...");
+            if (transformer.Transform() == false)
+            {
+                Environment.Exit(1);
+            }
+
+            Logger.DebugFormat("Completed transform...");
+
+            Environment.Exit(0);
         }
     }
 }
